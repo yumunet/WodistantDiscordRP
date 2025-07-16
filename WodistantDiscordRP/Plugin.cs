@@ -4,8 +4,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DiscordRPC;
-using Windows.Win32;
-using Windows.Win32.Foundation;
 using Wodistant.PluginLibrary.Hook.Keyboard;
 using Wodistant.PluginLibrary.MenuBar;
 
@@ -65,7 +63,7 @@ namespace WodistantDiscordRP
 
         private void OnConnected()
         {
-            bool isPro = IsWoditorPro();
+            bool isPro = Host.Environment.IsWoditorProEdition;
             client = new DiscordRpcClient("1346144187271221279");
             client.Initialize();
             client.SetPresence(new RichPresence()
@@ -116,22 +114,6 @@ namespace WodistantDiscordRP
                 Debug.WriteLine(e);
             }
             return null;
-        }
-
-        private bool IsWoditorPro()
-        {
-            var hMainWnd = (HWND)Host.MapEditor.GetMapEditorWindowHandle();
-            int length = PInvoke.GetWindowTextLength(hMainWnd) + 1;
-            string windowTitle;
-            unsafe
-            {
-                fixed (char* chars = new char[length])
-                {
-                    PInvoke.GetWindowText(hMainWnd, chars, length);
-                    windowTitle = new string(chars);
-                }
-            }
-            return windowTitle.Contains("WOLF RPGエディター PRO");
         }
     }
 }
