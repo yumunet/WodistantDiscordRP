@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DiscordRPC;
+using DiscordRPC.Message;
 using Wodistant.PluginLibrary.Hook.Keyboard;
 using Wodistant.PluginLibrary.MenuBar;
 
@@ -23,8 +24,8 @@ namespace WodistantDiscordRP
 
         public override IKeyboardAction[] KeyboardActions => new IKeyboardAction[] { };
 
-        private bool isConnected = false;
-
+        private bool isWoditorConnected = false;
+        private Timestamps timestampsAtConneciton;
         private DiscordRpcClient client;
 
         public override void OnInitializePlugin()
@@ -34,7 +35,7 @@ namespace WodistantDiscordRP
 
         public override void OnFinalizePlugin()
         {
-            client?.Dispose();
+            Disconnect();
         }
 
         private void Observer()
@@ -43,29 +44,64 @@ namespace WodistantDiscordRP
             {
                 if (Host.Environment.IsWoditorConnected)
                 {
-                    if (!isConnected)
+                    if (!isWoditorConnected)
                     {
-                        isConnected = true;
-                        OnConnected();
+                        isWoditorConnected = true;
+                        timestampsAtConneciton = Timestamps.Now;
+                        Connect();
                     }
                 }
                 else
                 {
-                    if (isConnected)
+                    if (isWoditorConnected)
                     {
-                        isConnected = false;
-                        OnUnconnected();
+                        isWoditorConnected = false;
+                        Disconnect();
                     }
                 }
                 Thread.Sleep(1);
             }
         }
 
-        private void OnConnected()
+        private void Connect()
         {
-            bool isPro = Host.Environment.IsWoditorProEdition;
             client = new DiscordRpcClient("1346144187271221279");
+            client.OnPresenceUpdate += OnPresenceUpdate;
+            client.OnConnectionFailed += OnConnectionFailed;
+            client.OnReady += OnReady;
             client.Initialize();
+        }
+
+        private void Disconnect()
+        {
+            client?.Dispose();
+        }
+
+        private void OnPresenceUpdate(object sender, PresenceMessage args)
+        {
+            Debug.WriteLine($"{args.Type}: {args.Name} {args.ApplicationID}");
+        }
+
+        private async void OnConnectionFailed(object sender, ConnectionFailedMessage args)
+        {
+            // Discordクライアントが起動していなかったか終了した場合は、5秒後に再試行
+            Debug.WriteLine($"{args.Type}: {args.FailedPipe}");
+
+            client.Dispose(); // 重複実行されないためにも、まず破棄
+            await Task.Delay(5000);
+
+            if (Host.Environment.IsWoditorConnected)
+            {
+                Connect();
+            }
+        }
+
+        private void OnReady(object sender, ReadyMessage args)
+        {
+            // Discordクライアントへ接続後に、Presenceをセット
+            Debug.WriteLine($"{args.Type}: {args.User} {args.Version}");
+
+            bool isPro = Host.Environment.IsWoditorProEdition;
             client.SetPresence(new RichPresence()
             {
                 Details = GetGameName(),
@@ -74,13 +110,8 @@ namespace WodistantDiscordRP
                     LargeImageKey = isPro ? "editor_pro" : "editor",
                     LargeImageText = isPro ? "WOLF RPG Editor Pro" : ""
                 },
-                Timestamps = Timestamps.Now
+                Timestamps = timestampsAtConneciton
             });
-        }
-
-        private void OnUnconnected()
-        {
-            client.Dispose();
         }
 
         private string GetGameName()
