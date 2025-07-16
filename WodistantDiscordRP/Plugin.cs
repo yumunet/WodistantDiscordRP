@@ -24,42 +24,40 @@ namespace WodistantDiscordRP
 
         public override IKeyboardAction[] KeyboardActions => new IKeyboardAction[] { };
 
+        private Timer triggerTimer;
         private bool isWoditorConnected = false;
         private Timestamps timestampsAtConneciton;
         private DiscordRpcClient client;
 
         public override void OnInitializePlugin()
         {
-            Task.Run(() => Observer());
+            triggerTimer = new Timer(Trigger, null, 0, 100);
         }
 
         public override void OnFinalizePlugin()
         {
+            triggerTimer.Dispose();
             Disconnect();
         }
 
-        private void Observer()
+        private void Trigger(object state)
         {
-            while (true)
+            if (Host.Environment.IsWoditorConnected)
             {
-                if (Host.Environment.IsWoditorConnected)
+                if (!isWoditorConnected)
                 {
-                    if (!isWoditorConnected)
-                    {
-                        isWoditorConnected = true;
-                        timestampsAtConneciton = Timestamps.Now;
-                        Connect();
-                    }
+                    isWoditorConnected = true;
+                    timestampsAtConneciton = Timestamps.Now;
+                    Connect();
                 }
-                else
+            }
+            else
+            {
+                if (isWoditorConnected)
                 {
-                    if (isWoditorConnected)
-                    {
-                        isWoditorConnected = false;
-                        Disconnect();
-                    }
+                    isWoditorConnected = false;
+                    Disconnect();
                 }
-                Thread.Sleep(1);
             }
         }
 
