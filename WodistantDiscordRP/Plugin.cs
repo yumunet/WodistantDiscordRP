@@ -16,7 +16,7 @@ namespace WodistantDiscordRP
 
         public override string Author => "yumu";
 
-        public override string Version => "1.0.0";
+        public override string Version => "1.1.0";
 
         public override string Description => "Discordクライアントと連携して、アクティビティステータス（Rich Presence）を表示させます。";
 
