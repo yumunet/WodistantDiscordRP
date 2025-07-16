@@ -72,7 +72,7 @@ namespace WodistantDiscordRP
                 Assets = new Assets()
                 {
                     LargeImageKey = isPro ? "editor_pro" : "editor",
-                    LargeImageText = "WOLF RPG Editor" + (isPro ? " PRO" : "")
+                    LargeImageText = isPro ? "WOLF RPG Editor Pro" : ""
                 },
                 Timestamps = Timestamps.Now
             });
